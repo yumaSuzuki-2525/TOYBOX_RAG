@@ -1,0 +1,25 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        // ==========================================
+        // 保存するたびに自動でカバレッジを更新・表示する
+        // ==========================================
+        "go.coverOnSave": true,
+        "go.coverageDecorator": {
+            "type": "highlight",
+            "coveredHighlightColor": "rgba(64, 128, 64, 0.5)",
+            "uncoveredHighlightColor": "rgba(128, 64, 64, 0.5)"
+        },
+        
+        // ==========================================
+        // Testing UIのボタンにオプションを強制追加
+        // ==========================================
+        "go.testFlags": [
+            "-coverprofile=coverage.out"
+        ]
+    }
+}
