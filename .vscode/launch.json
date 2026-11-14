@@ -5,12 +5,20 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "サンプル動作確認",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${file}",
+            "args": []
+        },
+        {
             "name": "RAG実行",
             "type": "go",
             "request": "launch",
             "mode": "auto",
             "program": "${workspaceFolder}/cmd/cli/main.go",
-            "envFile": "${workspaceFolder}/.env", 
+            "envFile": "${workspaceFolder}/.env",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": []
@@ -20,8 +28,8 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}/cmd/import/import_pdf.go",
-            "envFile": "${workspaceFolder}/.env", 
+            "program": "${workspaceFolder}/cmd/import/import.go",
+            "envFile": "${workspaceFolder}/.env",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "args": []

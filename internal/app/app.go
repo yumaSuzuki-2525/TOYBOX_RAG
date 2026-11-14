@@ -52,7 +52,7 @@ func RunApp(ctx context.Context, cfg *config.Config) {
 		// RAGの検索＆生成関数を呼び出し
 		fmt.Printf("「%s」について検索中...\n", userQuestion)
 		// 質問実行
-		err = ragUsecase.RagAnswer(ctx, userQuestion)
+		err = ragUsecase.RagAnswer(ctx, userQuestion, cfg.SearchLimit)
 		if err != nil {
 			fmt.Printf("処理中にエラーが発生しました: %v\n", err)
 		}

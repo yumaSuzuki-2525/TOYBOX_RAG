@@ -11,6 +11,7 @@ type EmbeddingService interface {
 type TextGenerator interface {
 	GenerateAnswer(prompt string) (string, error)
 }
+
 // ChunkTextBySemanticsは、形態素解析でチャンクを取得
 type AnalyzerService interface {
 	ChunkTextBySemantics(text string, maxRunes int) ([]string, error)
@@ -39,10 +40,10 @@ type FileService interface {
 
 // DocumentRepositoryはDBに対する操作
 type DocumentRepository interface {
-	SearchSimilar(ctx context.Context, vector []float64) (string, error)
+	SearchSimilar(ctx context.Context, vector []float64, searchLimit int16) (string, error)
 }
 
-// ImpoertRepositoryはDBに対する操作
-type ImpoertRepository interface {
+// ImportRepositoryはDBに対する操作
+type ImportRepository interface {
 	InsertData(ctx context.Context, chunk string, vectorStr string) error
 }

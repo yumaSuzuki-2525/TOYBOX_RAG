@@ -12,6 +12,7 @@ type Config struct {
 	DBUser       string `env:"DB_USER,required"`
 	DBPass       string `env:"DB_PASS,required"`
 	DBName       string `env:"DB_NAME,required"`
+	SearchLimit  int16  `env:"SEARCH_LIMIT,required"`
 	OllamaURL    string `env:"OLLAMA_URL,required"`
 	SourceDir    string `env:"SOURCE_DIR,required"`
 	ProcessedDir string `env:"PROCESSED_DIR,required"`

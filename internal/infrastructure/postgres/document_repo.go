@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // DocumentRepository は domain.DocumentRepository を満たすPostgres用の実装です
@@ -18,21 +19,34 @@ func NewDocumentRepository(db *sql.DB) *DocumentRepository {
 	return &DocumentRepository{db: db}
 }
 
-func (r *DocumentRepository) SearchSimilar(ctx context.Context, vector []float64) (string, error) {
+func (r *DocumentRepository) SearchSimilar(ctx context.Context, vector []float64, searchLimit int16) (string, error) {
 	query := `
-		SELECT content FROM documents ORDER BY embedding <-> $1 LIMIT 1;
+		SELECT content FROM documents ORDER BY embedding <-> $1 LIMIT $2;
 		`
 	// 検索時もJSONエンコードを使って確実にカンマ区切りの文字列にする
 	vectorBytes, _ := json.Marshal(vector)
 	vectorStr := string(vectorBytes)
-	// Goの配列形式[] をPostgresの配列形式{}ではなく、JSON風の[]のまま渡す(pgvectorの仕様)
-	var retrievedContext string
-	// 実際はDBにデータが入っていないとエラーになるため、ここではモックのテキストを代入します
-	err := r.db.QueryRow(query, vectorStr).Scan(&retrievedContext)
+	// 検索実行
+	rows, err := r.db.Query(query, vectorStr, searchLimit)
 	if err != nil {
 		return "", fmt.Errorf("DB検索エラー: %v", err)
 	}
-	return retrievedContext, nil
+	defer rows.Close()
+	var contents []string
+	for rows.Next() {
+		var content string
+		if err := rows.Scan(&content); err != nil {
+			return "", fmt.Errorf("行の読み込みエラー: %v", err)
+		}
+		contents = append(contents, content)
+	}
+	if err := rows.Err(); err != nil {
+		return "", fmt.Errorf("行走査エラー: %v", err)
+	}
+	if len(contents) == 0 {
+		return "", fmt.Errorf("該当する資料が見つかりませんでした")
+	}
+	return strings.Join(contents, "\n---\n"), nil
 }
 
 // DocumentRepository は domain.DocumentRepository を満たすPostgres用の実装です

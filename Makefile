@@ -1,6 +1,6 @@
 include .env  # Make実行時に.env読み込み
 export
-
+# setup
 up:
 	docker-compose up -d
 
@@ -11,7 +11,7 @@ re-build:
 	$(MAKE) down
 	docker-compose build
 	$(MAKE) up
-
+# run
 cli:
 	go run ./cmd/cli
 
@@ -24,4 +24,8 @@ pprof_cpu:
 pprof_trace:
 	go tool trace trace.out
 
+# moq update
+generate:
+	go generate ./...
+	
 # go tool cover -html coverage.out

@@ -5,6 +5,14 @@
         }
     ],
     "settings": {
+        "editor.formatOnSave": true,
+        "editor.tabSize": 2,
+        "editor.insertSpaces": true,
+        "workbench.colorCustomizations": {
+            "titleBar.activeBackground": "#143d29",
+            "titleBar.activeForeground": "#ffffff",
+            "titleBar.inactiveForeground": "#789e8b"
+        },
         // ==========================================
         // 保存するたびに自動でカバレッジを更新・表示する
         // ==========================================
@@ -14,12 +22,11 @@
             "coveredHighlightColor": "rgba(64, 128, 64, 0.5)",
             "uncoveredHighlightColor": "rgba(128, 64, 64, 0.5)"
         },
-        
         // ==========================================
         // Testing UIのボタンにオプションを強制追加
         // ==========================================
         "go.testFlags": [
             "-coverprofile=coverage.out"
-        ]
+        ],
     }
 }

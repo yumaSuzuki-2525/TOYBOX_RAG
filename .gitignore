@@ -27,3 +27,5 @@ public/docs/*
 !public/docs/.gitkeep
 public/processed/*
 !public/processed/.gitkeep
+
+*ignore*
