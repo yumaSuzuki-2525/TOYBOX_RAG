@@ -3,114 +3,115 @@ package usecase
 import (
 	"context"
 	"errors"
-	"sample/internal/domain" // ※ご自身の環境に合わせてパスを調整してください
+	"strings"
 	"testing"
 )
 
-// ==========================================
-// 1. 正常に動くモックAI
-// ==========================================
-type mockLLM struct{}
-
-func (m *mockLLM) GetEmbedding(text string) ([]float64, error) {
-	return []float64{0.1, 0.2, 0.3}, nil
-}
-func (m *mockLLM) GenerateAnswer(prompt string) (string, error) {
-	return "これはAIのダミー回答です。", nil
-}
-
-// ==========================================
-// 2. エラーを起こすモックAI
-// ==========================================
-type errorMockLLM struct{}
-
-func (m *errorMockLLM) GetEmbedding(text string) ([]float64, error) {
-	return nil, errors.New("AI通信に失敗しました")
-}
-func (m *errorMockLLM) GenerateAnswer(prompt string) (string, error) {
-	return "", errors.New("回答生成に失敗しました")
-}
-
-// ==========================================
-// 3. 正常に動くモックDB
-// ==========================================
-type mockRepo struct{}
-
-func (m *mockRepo) SearchSimilar(ctx context.Context, vector []float64) (string, error) {
-	return "これはDBから取得したダミーの参考資料です。", nil
-}
-
-// ==========================================
-// 4. テスト本体（テーブル駆動テスト）
-// ==========================================
-func TestRagAnswer(t *testing.T) {
-	// テストケースの表（テーブル）を定義
+func TestRagUsecase_RagAnswer(t *testing.T) {
 	tests := []struct {
-		name     string            // テスト名
-		question string            // 入力値
-		mockLLM  domain.LLMService // 注入するモックAI
-		wantErr  bool              // エラーを期待するか
-		errMsg   string            // 期待するエラーメッセージ
+		// -----------------------------------------
+		// テスト条件
+		// -----------------------------------------
+		name  string
+		setup func(f *ragTestfields)
+		// -----------------------------------------
+		// 検証
+		// -----------------------------------------
+		assert  func(t *testing.T, f *ragTestfields)
+		wantErr bool
 	}{
+		// ---------------------------------------------------
+		// 正常系
+		// ---------------------------------------------------
 		{
-			name:     "正常系: 正しくAIの回答が生成される",
-			question: "テストの質問",
-			mockLLM:  &mockLLM{}, // 正常なAIをセット
-			wantErr:  false,
+			name: "正常系: 質問のベクトル化・類似検索・LLM回答生成が成功し、プロンプトに検索結果と質問が含まれる",
+			assert: func(t *testing.T, f *ragTestfields) {
+				calls := f.llm.GenerateAnswerCalls()
+				if len(calls) != 1 {
+					// 安全ガード兼バグ検知
+					t.Fatalf("GenerateAnswer() の呼び出し回数 = %d回, 期待値 = 1回", len(calls))
+				}
+				gotPrompt := calls[0].Prompt
+				if !strings.Contains(gotPrompt, "デフォルトのDBテキスト内容") {
+					t.Errorf("プロンプトに取得した参考資料が含まれていません: %s", gotPrompt)
+				}
+			},
+			wantErr: false,
+		},
+		// ---------------------------------------------------
+		// 異常系
+		// ---------------------------------------------------
+		{
+			name: "異常系: 質問のベクトル化(GetEmbedding)に失敗した場合、エラーを返す",
+			setup: func(f *ragTestfields) {
+				f.llm.GetEmbeddingFunc = func(text string) ([]float64, error) {
+					return nil, errors.New("ベクトル変換エラー")
+				}
+			},
+			wantErr: true,
 		},
 		{
-			name:     "異常系: AIの通信でエラーが起きた場合は処理が中断される",
-			question: "テストの質問",
-			mockLLM:  &errorMockLLM{}, // 悪いAIをセット
-			wantErr:  true,
-			errMsg:   "AI通信に失敗しました",
+			name: "異常系: 類似文章の検索(SearchSimilar)に失敗した場合、エラーを返す",
+			setup: func(f *ragTestfields) {
+				f.repo.SearchSimilarFunc = func(ctx context.Context, vector []float64, searchLimit int16) (string, error) {
+					return "", errors.New("類似文章検索エラー")
+				}
+			},
+			wantErr: true,
 		},
-		// 今後「DBがエラーを返した場合」などもここに行を追加するだけでテスト可能です
+		{
+			name: "異常系: LLMの回答生成(GenerateAnswer)に失敗した場合、エラーを返す",
+			setup: func(f *ragTestfields) {
+				f.llm.GenerateAnswerFunc = func(prompt string) (string, error) {
+					return "", errors.New("LLM回答生成エラー")
+				}
+			},
+			wantErr: true,
+		},
 	}
 
-	// テーブルをループで回して実行
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// モックDBは共通で使う
-			fakeRepo := &mockRepo{}
-			// Usecaseにモックを注入
-			ragUsecase := NewRagUsecase(fakeRepo, tt.mockLLM)
-
-			// 実行
-			err := ragUsecase.RagAnswer(context.Background(), tt.question)
-
-			// 検証1: エラーの「有無」が期待通りか
-			if (err != nil) != tt.wantErr {
-				t.Errorf("wantErr = %v, but got err = %v", tt.wantErr, err)
-				return // これ以上検証しない
+			f := newDefaultRagFields()
+			if tt.setup != nil {
+				tt.setup(&f)
 			}
 
-			// 検証2: エラーの「内容」が期待通りか
-			if tt.wantErr && err.Error() != tt.errMsg {
-				t.Errorf("expected error %q, got %q", tt.errMsg, err.Error())
+			u := NewRagUsecase(f.repo, f.llm)
+			if err := u.RagAnswer(context.Background(), "ユーザー質問", 10); (err != nil) != tt.wantErr {
+				t.Errorf("RagAnswer() のエラー結果 = %v, エラー期待値 = %v", err, tt.wantErr)
+			}
+
+			if tt.assert != nil {
+				tt.assert(t, &f)
 			}
 		})
 	}
 }
 
-// 複数の参考資料を返すマルチモックDB
-type multiMockRepo struct{}
+// -----------------------------------------------------------------------------
+// テスト用ヘルパー
+// -----------------------------------------------------------------------------
 
-func (m *multiMockRepo) SearchSimilar(ctx context.Context, vector []float64) (string, error) {
-	// LIMIT 1 ではなく、複数の関連ドキュメントが結合されて返ってくる想定
-	return "【資料1】Go言語のクリーンアーキテクチャについて\n【資料2】ポインタとインターフェースの使い分け", nil
+type ragTestfields struct {
+	repo *DocumentRepositoryMock
+	llm  *LLMServiceMock
 }
 
-func TestRagAnswer_MultipleContexts(t *testing.T) {
-	fakeLLM := &mockLLM{}
-	multiRepo := &multiMockRepo{}
-
-	ragUsecase := NewRagUsecase(multiRepo, fakeLLM)
-
-	// 実行
-	err := ragUsecase.RagAnswer(context.Background(), "クリーンアーキテクチャについて教えて")
-
-	if err != nil {
-		t.Errorf("予期せぬエラー: %v", err)
+func newDefaultRagFields() ragTestfields {
+	return ragTestfields{
+		repo: &DocumentRepositoryMock{
+			SearchSimilarFunc: func(ctx context.Context, vector []float64, searchLimit int16) (string, error) {
+				return "デフォルトのDBテキスト内容", nil
+			},
+		},
+		llm: &LLMServiceMock{
+			GenerateAnswerFunc: func(prompt string) (string, error) {
+				return "デフォルトのLLM回答", nil
+			},
+			GetEmbeddingFunc: func(text string) ([]float64, error) {
+				return []float64{0.1, 0.2, 0.3}, nil
+			},
+		},
 	}
 }
