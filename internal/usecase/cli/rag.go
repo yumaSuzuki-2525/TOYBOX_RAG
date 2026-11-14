@@ -1,3 +1,4 @@
+// Package usecase implements ...
 package usecase
 
 import (
@@ -11,6 +12,8 @@ type RagUsecase struct {
 	llm  domain.LLMService
 }
 
+//go:generate moq -out moq_test.go -pkg usecase ../../domain DocumentRepository LLMService
+
 func NewRagUsecase(repo domain.DocumentRepository, llm domain.LLMService) *RagUsecase {
 	return &RagUsecase{
 		repo: repo,
@@ -18,7 +21,7 @@ func NewRagUsecase(repo domain.DocumentRepository, llm domain.LLMService) *RagUs
 	}
 }
 
-func (u *RagUsecase) RagAnswer(ctx context.Context, userQuestion string) error {
+func (u *RagUsecase) RagAnswer(ctx context.Context, userQuestion string, searchLimit int16) error {
 	// ==================================
 	// 質問をベクトル（数値）に変換(Embedding)
 	// ==================================
@@ -29,7 +32,7 @@ func (u *RagUsecase) RagAnswer(ctx context.Context, userQuestion string) error {
 	// ==================================
 	// DBから意味が近い文章を検索(Retrieval)
 	// ==================================
-	retrievedContext, err := u.repo.SearchSimilar(ctx, vector)
+	retrievedContext, err := u.repo.SearchSimilar(ctx, vector, searchLimit)
 	if err != nil {
 		return err
 	}
@@ -49,6 +52,7 @@ func (u *RagUsecase) RagAnswer(ctx context.Context, userQuestion string) error {
 		retrievedContext,
 		userQuestion,
 	)
+	fmt.Print(prompt)
 	// =================================
 	// LLM回答
 	// =================================

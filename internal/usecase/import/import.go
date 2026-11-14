@@ -1,3 +1,4 @@
+// Package usecase implements ...
 package usecase
 
 import (
@@ -10,14 +11,16 @@ import (
 	"strings"
 )
 
+//go:generate moq -out moq_test.go -pkg usecase ../../domain ImportRepository FileService ImportService AnalyzerService
+
 type ImportUsecase struct {
-	repo domain.ImpoertRepository
+	repo domain.ImportRepository
 	file domain.FileService
 	imp  domain.ImportService
 	alz  domain.AnalyzerService
 }
 
-func NewImportUsecase(repo domain.ImpoertRepository, file domain.FileService, imp domain.ImportService,
+func NewImportUsecase(repo domain.ImportRepository, file domain.FileService, imp domain.ImportService,
 	alz domain.AnalyzerService) *ImportUsecase {
 	return &ImportUsecase{
 		repo: repo,
