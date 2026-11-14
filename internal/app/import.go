@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sample/config"
-	"sample/internal/analyzer"
+	"sample/internal/infrastructure/analyzer"
 	"sample/internal/infrastructure/file"
 	"sample/internal/infrastructure/ollama"
 	"sample/internal/infrastructure/postgres"
