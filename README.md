@@ -8,6 +8,7 @@ docker-compose up -d
 ```
 
 ### AIモデルのダウンロード
+https://ollama.com/library/llama3
 ```cmd
 # 1. 回答生成用の Llama 3 をダウンロード（数GB:数分かかります）
 docker exec -it ollama_server ollama pull llama3
@@ -68,3 +69,5 @@ PROCESSED_DIR=./public/processed
 > * 0006: 100ページあるPDFなどを探す。insertがN+1なのでCOPYのバルクインサート検討。
 
 > * 0007: 不要な情報も必ずあるがどう判断する？ただ流し込むと容量が圧迫される。
+
+> * 0008: チャンキングについて。

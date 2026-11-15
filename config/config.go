@@ -7,15 +7,16 @@ import (
 )
 
 type Config struct {
-	DBHost       string `env:"DB_HOST,required"`
-	DBPort       string `env:"DB_PORT,required"`
-	DBUser       string `env:"DB_USER,required"`
-	DBPass       string `env:"DB_PASS,required"`
-	DBName       string `env:"DB_NAME,required"`
-	SearchLimit  int16  `env:"SEARCH_LIMIT,required"`
-	OllamaURL    string `env:"OLLAMA_URL,required"`
-	SourceDir    string `env:"SOURCE_DIR,required"`
-	ProcessedDir string `env:"PROCESSED_DIR,required"`
+	DBHost        string `env:"DB_HOST,required"`
+	DBPort        string `env:"DB_PORT,required"`
+	DBUser        string `env:"DB_USER,required"`
+	DBPass        string `env:"DB_PASS,required"`
+	DBName        string `env:"DB_NAME,required"`
+	SearchLimit   int16  `env:"SEARCH_LIMIT,required"`
+	OllamaURL     string `env:"OLLAMA_URL,required"`
+	SourceDir     string `env:"SOURCE_DIR,required"`
+	ProcessedDir  string `env:"PROCESSED_DIR,required"`
+	MaxChunkRunes int    `env:"MAX_CHUNK_RUNES,required"`
 }
 
 func NewConfig() (*Config, error) {
